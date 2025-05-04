@@ -5,6 +5,8 @@
     "main": "src/index.js",
     "type": "module",
     "scripts": {
+        "start": "node index.js",
+    "build": "echo 'No build needed'",
         "start": "node src/index.js",
         "dev": "nodemon src/index.js"
     },
