@@ -7,9 +7,31 @@ import userRoutes from './src/routes/users.js';
 
 dotenv.config();
 
+
+
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? [process.env.ORIGIN_1, process.env.ORIGIN_2]
+  : ['http://localhost:5173']; // or whichever local dev port you're using
+
+// CORS middleware
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin || allowedOrigins.includes(origin)) {
+      console.log('CORS allowed:', origin);
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+};
+
+
 const app = express();
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use('/api/roadmaps', roadmapRoutes);
