@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -11,6 +11,7 @@ import ProfileSetup from './pages/auth/ProfileSetup';
 import Dashboard from './pages/dashboard/Dashboard';
 import RoadmapView from './pages/roadmaps/RoadmapView';
 import NotFound from './pages/NotFound';
+;
 
 function App() {
   return (

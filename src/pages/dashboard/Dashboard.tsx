@@ -1,38 +1,15 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  Plus, Code, Layout, Database, BookOpen, Award, Search, Bell
+  Plus, Code, BookOpen, Award, Search, Bell, Save 
 } from 'lucide-react';
 import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
 import { useAuth } from '../../context/AuthContext';
 import RoadmapCard from '../../components/roadmaps/RoadmapCard';
 import XPProgress from '../../components/gamification/XPProgress';
-
-// Mock data for roadmaps
-const MOCK_ROADMAPS = [
-  {
-    id: '1',
-    title: 'React Developer',
-    category: 'Web Development',
-    progress: 35,
-    totalWeeks: 10,
-    completedWeeks: 3,
-    lastActivity: new Date('2025-06-10'),
-    imageUrl: 'https://images.pexels.com/photos/11035380/pexels-photo-11035380.jpeg'
-  },
-  {
-    id: '2',
-    title: 'UI/UX Fundamentals',
-    category: 'UI/UX Design',
-    progress: 65,
-    totalWeeks: 8,
-    completedWeeks: 5,
-    lastActivity: new Date('2025-06-15'),
-    imageUrl: 'https://images.pexels.com/photos/5926389/pexels-photo-5926389.jpeg'
-  }
-];
+import { useRoadmapStore } from '../../store/useRoadmapStore';
 
 // Mock data for badges
 const MOCK_BADGES = [
@@ -50,15 +27,39 @@ const AVAILABLE_SKILLS = [
   { id: 'figma', name: 'Figma', icon: <code className="text-purple-400">🎨</code>, category: 'UI/UX Design' },
   { id: 'python', name: 'Python', icon: <code className="text-yellow-400">🐍</code>, category: 'Data Science' },
   { id: 'ml', name: 'Machine Learning', icon: <code className="text-pink-400">🧠</code>, category: 'Data Science' },
-  { id: 'swift', name: 'iOS Development', icon: <code className="text-orange-400">📱</code>, category: 'Mobile' }
+  { id: 'swift', name: 'iOS Development', icon: <code className="text-orange-400">📱</code>, category: 'Mobile' },
+  { id: 'uiux', name: 'UI/UX Design', icon: <code className="text-purple-400">🎨</code>, category: 'UI/UX Design' },
+  { id: 'datascience', name: 'Data Science', icon: <code className="text-blue-400">📊</code>, category: 'Data Science' },
 ];
 
 const Dashboard: React.FC = () => {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  
+  const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+  const { userRoadmaps, template, fetchRoadmaps, fetchTemplate, createRoadmap, isLoading, error } = useRoadmapStore();
+  const [weeks, setWeeks] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchRoadmaps();
+  }, [fetchRoadmaps]);
+
+  useEffect(() => {
+    if (selectedSkill) {
+      console.log('Dashboard: Fetching template for skill:', selectedSkill);
+      fetchTemplate(selectedSkill);
+    }
+  }, [selectedSkill, fetchTemplate]);
+
+  useEffect(() => {
+    if (template && template.skill.toLowerCase() === selectedSkill?.toLowerCase()) {
+      console.log('Dashboard: Template updated, setting weeks:', template.weeks);
+      setWeeks(template.weeks || []);
+    }
+  }, [template, selectedSkill]);
+
   // Filter skills based on search query and selected category
   const filteredSkills = AVAILABLE_SKILLS.filter(skill => {
     const matchesSearch = skill.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -68,6 +69,30 @@ const Dashboard: React.FC = () => {
   
   // Get unique categories for the filter
   const categories = Array.from(new Set(AVAILABLE_SKILLS.map(skill => skill.category)));
+
+  const handleSkillSelect = (skillId: string) => {
+    setSelectedSkill(skillId);
+  };
+
+  const handleCreateRoadmap = async () => {
+    if (!selectedSkill) return;
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+    try {
+      console.log('Dashboard: Creating roadmap for skill:', selectedSkill);
+      const roadmapId = await createRoadmap(selectedSkill);
+      setIsCreateModalOpen(false);
+      setSelectedSkill(null);
+      navigate(`/roadmap/${roadmapId}`);
+    } catch (err: any) {
+      console.error('Dashboard: Failed to create roadmap:', err);
+      if (err.response?.status === 401) {
+        navigate('/login');
+      }
+    }
+  };
 
   return (
     <>
@@ -167,9 +192,9 @@ const Dashboard: React.FC = () => {
             </Link>
           </div>
           
-          {MOCK_ROADMAPS.length > 0 ? (
+          {userRoadmaps.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {MOCK_ROADMAPS.map(roadmap => (
+              {userRoadmaps.map(roadmap => (
                 <RoadmapCard key={roadmap.id} roadmap={roadmap} />
               ))}
             </div>
@@ -230,94 +255,177 @@ const Dashboard: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-gray-800 border border-gray-700 rounded-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+              className="bg-gray-800 border border-gray-700 rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold">Create New Roadmap</h2>
                 <button 
-                  onClick={() => setIsCreateModalOpen(false)}
+                  onClick={() => {
+                    setIsCreateModalOpen(false);
+                    setSelectedSkill(null);
+                  }}
                   className="text-gray-400 hover:text-white"
                 >
                   ✕
                 </button>
               </div>
               
-              <div className="mb-6">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-500" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search for a skill..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-gray-700/50 border border-gray-600 text-white placeholder-gray-400 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full pl-10 p-3"
-                  />
-                </div>
-              </div>
-              
-              <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className={`py-1 px-3 rounded-full text-sm whitespace-nowrap ${
-                    selectedCategory === null
-                      ? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  All
-                </button>
-                {categories.map(category => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`py-1 px-3 rounded-full text-sm whitespace-nowrap ${
-                      selectedCategory === category
-                        ? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                {filteredSkills.map(skill => (
-                  <Link 
-                    key={skill.id} 
-                    to={`/roadmap/create/${skill.id}`}
-                    className="block"
-                  >
-                    <motion.div
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      className="bg-gray-700/50 border border-gray-600 hover:border-cyan-500/50 rounded-lg p-4 h-full flex flex-col cursor-pointer"
-                    >
-                      <div className="flex items-center mb-4">
-                        <div className="h-10 w-10 rounded-lg bg-gray-800 flex items-center justify-center mr-3 text-xl">
-                          {skill.icon}
-                        </div>
-                        <div>
-                          <h4 className="font-medium">{skill.name}</h4>
-                          <p className="text-gray-400 text-sm">{skill.category}</p>
-                        </div>
+              {!selectedSkill ? (
+                <>
+                  <div className="mb-6">
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-5 w-5 text-gray-500" />
                       </div>
-                    </motion.div>
-                  </Link>
-                ))}
-              </div>
+                      <input
+                        type="text"
+                        placeholder="Search for a skill..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="bg-gray-700/50 border border-gray-600 text-white placeholder-gray-400 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full pl-10 p-3"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                    <button
+                      onClick={() => setSelectedCategory(null)}
+                      className={`py-1 px-3 rounded-full text-sm whitespace-nowrap ${
+                        selectedCategory === null
+                          ? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      All
+                    </button>
+                    {categories.map(category => (
+                      <button
+                        key={category}
+                        onClick={() => setSelectedCategory(category)}
+                        className={`py-1 px-3 rounded-full text-sm whitespace-nowrap ${
+                          selectedCategory === category
+                            ? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white'
+                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                    {filteredSkills.map(skill => (
+                      <motion.div
+                        key={skill.id}
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => handleSkillSelect(skill.id)}
+                        className="bg-gray-700/50 border border-gray-600 hover:border-cyan-500/50 rounded-lg p-4 h-full flex flex-col cursor-pointer"
+                      >
+                        <div className="flex items-center mb-4">
+                          <div className="h-10 w-10 rounded-lg bg-gray-800 flex items-center justify-center mr-3 text-xl">
+                            {skill.icon}
+                          </div>
+                          <div>
+                            <h4 className="font-medium">{skill.name}</h4>
+                            <p className="text-gray-400 text-sm">{skill.category}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {isLoading ? (
+                    <div className="text-white text-center py-8">Loading template...</div>
+                  ) : error || !template ? (
+                    <div className="text-white text-center py-8">
+                      <p>{error || 'Template not found'}</p>
+                      {error && <p className="text-red-400 mt-2">Error details: {error}</p>}
+                      <button
+                        onClick={() => setSelectedSkill(null)}
+                        className="text-cyan-400 hover:text-cyan-300 mt-4"
+                      >
+                        Back to Skill Selection
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="mb-8">
+                        <h2 className="text-xl font-bold mb-4">Preview: {template.title}</h2>
+                        <RoadmapCard
+                          roadmap={{
+                            id: `preview-${selectedSkill}`,
+                            title: template.title || `${selectedSkill} Roadmap`,
+                            category: template.category || 'Uncategorized',
+                            progress: 0,
+                            totalWeeks: template.totalWeeks || weeks.length,
+                            completedWeeks: 0,
+                            lastActivity: new Date(),
+                            imageUrl: template.imageUrl || 'https://picsum.photos/400/200',
+                          }}
+                        />
+                      </div>
+
+                      <div className="mb-8">
+                        <h2 className="text-xl font-bold mb-4">Weeks</h2>
+                        {weeks.length > 0 ? (
+                          <div className="space-y-6">
+                            {weeks.map((week: any, index: number) => (
+                              <motion.div
+                                key={`week-${index}`}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: index * 0.1 }}
+                                className="bg-gray-800/70 border border-gray-700 rounded-xl p-6 shadow-lg"
+                              >
+                                <h3 className="text-lg font-semibold mb-2">{week.title}</h3>
+                                <ul className="space-y-2">
+                                  {week.steps.map((step: any, stepIndex: number) => (
+                                    <li
+                                      key={`step-${index}-${stepIndex}`}
+                                      className="text-gray-300"
+                                    >
+                                      {step.title}: {step.description}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </motion.div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-gray-400">No weeks available for this template.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
               
               <div className="flex justify-end gap-3 mt-6 border-t border-gray-700 pt-4">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsCreateModalOpen(false)}
+                  onClick={() => {
+                    setIsCreateModalOpen(false);
+                    setSelectedSkill(null);
+                  }}
                   className="py-2 px-4 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700"
                 >
                   Cancel
                 </motion.button>
+                {selectedSkill && !isLoading && !error && template && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleCreateRoadmap}
+                    className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2"
+                  >
+                    <Save className="h-5 w-5" />
+                    <span>Create Roadmap</span>
+                  </motion.button>
+                )}
               </div>
             </motion.div>
           </div>

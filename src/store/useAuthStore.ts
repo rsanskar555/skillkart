@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await signInWithEmailAndPassword(auth, email, password);
       
       // Fetch user data from the backend
-      const { user } = await authAPI.getCurrentUser();
+      const user = await authAPI.getCurrentUser();
       
       set({
         currentUser: {
@@ -147,7 +147,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       
       try {
-        const { user } = await authAPI.getCurrentUser();
+        const user = await authAPI.getCurrentUser();
         
         set({
           currentUser: {

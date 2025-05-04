@@ -5,7 +5,10 @@ const stepSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  description: String,
+  description: {
+    type: String,
+    required: true
+  },
   status: {
     type: String,
     enum: ['not_started', 'in_progress', 'completed'],
@@ -13,8 +16,8 @@ const stepSchema = new mongoose.Schema({
   },
   resources: [
     {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Resource'
+      title: String,
+      url: String
     }
   ]
 });
@@ -24,46 +27,58 @@ const weekSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  description: String,
-  steps: [stepSchema]
+  steps: [stepSchema],
+  isCompleted: {
+    type: Boolean,
+    default: false
+  }
 });
 
-const roadmapSchema = new mongoose.Schema(
-  {
-    userId: {
-      type: String,
-      required: true
-    },
-    title: {
-      type: String,
-      required: true
-    },
-    description: String,
-    skill: {
-      type: String,
-      required: true
-    },
-    category: String,
-    totalWeeks: {
-      type: Number,
-      default: 0
-    },
-    completedWeeks: {
-      type: Number,
-      default: 0
-    },
-    progress: {
-      type: Number,
-      default: 0
-    },
-    imageUrl: String,
-    weeks: [weekSchema],
-    isTemplate: {
-      type: Boolean,
-      default: false
-    }
+const roadmapSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    required: true
   },
-  { timestamps: true }
-);
+  title: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  skill: {
+    type: String,
+    required: true
+  },
+  category: {
+    type: String,
+    required: true
+  },
+  totalWeeks: {
+    type: Number,
+    required: true
+  },
+  completedWeeks: {
+    type: Number,
+    default: 0
+  },
+  progress: {
+    type: Number,
+    default: 0
+  },
+  imageUrl: {
+    type: String
+  },
+  weeks: [weekSchema],
+  isTemplate: {
+    type: Boolean,
+    default: false
+  },
+  lastActivity: {
+    type: Date,
+    default: Date.now
+  }
+}, { timestamps: true });
 
 export default mongoose.model('Roadmap', roadmapSchema);

@@ -45,13 +45,14 @@ export const useDiscussionStore = create<DiscussionState>((set, get) => ({
       
       set({
         discussions,
-        isLoading: false
+        isLoading: false,
+        error: null, // Explicitly include all properties
       });
     } catch (error) {
       console.error('Fetch discussions error:', error);
       set({
         error: 'Failed to fetch discussions. Please try again.',
-        isLoading: false
+        isLoading: false,
       });
     }
   },
@@ -64,18 +65,21 @@ export const useDiscussionStore = create<DiscussionState>((set, get) => ({
       
       set(state => ({
         discussions: [discussion, ...state.discussions],
-        isLoading: false
+        isLoading: false,
+        error: null, // Explicitly include all properties
       }));
     } catch (error) {
       console.error('Add discussion error:', error);
       set({
         error: 'Failed to add discussion. Please try again.',
-        isLoading: false
+        isLoading: false,
       });
     }
   },
   
   addReply: async (discussionId: string, content: string) => {
+    set({ isLoading: true, error: null }); // Add isLoading for consistency
+    
     try {
       const { reply } = await discussionAPI.addReply(discussionId, content);
       
@@ -87,13 +91,16 @@ export const useDiscussionStore = create<DiscussionState>((set, get) => ({
                 replies: [...discussion.replies, reply]
               }
             : discussion
-        )
+        ),
+        isLoading: false,
+        error: null, // Explicitly include all properties
       }));
     } catch (error) {
       console.error('Add reply error:', error);
       set({
-        error: 'Failed to add reply. Please try again.'
+        error: 'Failed to add reply. Please try again.',
+        isLoading: false,
       });
     }
-  }
+  },
 }));
