@@ -94,7 +94,7 @@ const Login: React.FC = () => {
                 <div>
                   <p className="font-medium mb-1">Demo Credentials</p>
                   <p className="text-sm">Email: admin@example.com</p>
-                  <p className="text-sm">Password: Admin@123</p>
+                  <p className="text-sm">Password: Admi3</p>
                   <p className="text-sm">You can also able to register</p>
                 </div>
               </motion.div> */}
