@@ -35,3 +35,4 @@ server/.env
 # Firebase
 firebase-debug.log
 firebaseServiceAccount.json
+src\config\firebase.ts
