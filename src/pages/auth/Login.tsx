@@ -85,7 +85,7 @@ const Login: React.FC = () => {
                 <p className="text-gray-400 mt-2">Login to access your learning roadmaps</p>
               </motion.div>
 
-              {/* Demo credentials info */}
+              {/* Demo credentials info
               <motion.div
                 variants={itemVariants}
                 className="bg-cyan-500/10 border border-cyan-500/30 text-cyan-200 rounded-lg p-4 mb-6 flex items-start gap-3"
@@ -93,10 +93,11 @@ const Login: React.FC = () => {
                 <Info className="h-5 w-5 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium mb-1">Demo Credentials</p>
-                  <p className="text-sm">Email: demo@skillkart.com</p>
-                  <p className="text-sm">Password: demo1234</p>
+                  <p className="text-sm">Email: admin@example.com</p>
+                  <p className="text-sm">Password: Admin@123</p>
+                  <p className="text-sm">You can also able to register</p>
                 </div>
-              </motion.div>
+              </motion.div> */}
 
               {error && (
                 <motion.div
